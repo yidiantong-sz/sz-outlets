@@ -458,9 +458,25 @@ function doTel(o){
   navigator.clipboard && navigator.clipboard.writeText(o.phone).catch(function(){});
   toast('已复制号码 ' + o.phone + '，手机上会直接拨号');
 }
+/* 导航：有坐标直接用坐标定位；没有坐标就用「街道门牌地址」搜索。
+   不能用机构名搜索——"福田分局"这类名字高德会匹配到公安分局等错误 POI。 */
+function navAddr(o){
+  var a = (o.address || '').replace(/（[^）]*）/g, '').replace(/\([^)]*\)/g, '').trim();
+  var cut = a.indexOf('、');
+  if (cut > 10) a = a.slice(0, cut);
+  return a;
+}
 function doNav(o){
-  var kw = o.name + ' ' + o.address;
-  var url = 'https://uri.amap.com/search?keyword=' + encodeURIComponent(kw) + '&city=' + encodeURIComponent('深圳') + '&callnative=1';
+  var url;
+  if (o.lat && o.lng) {
+    url = 'https://uri.amap.com/marker?position=' + o.lng + ',' + o.lat
+        + '&name=' + encodeURIComponent(o.name)
+        + '&src=doubao&coordinate=gaode&callnative=1';
+  } else {
+    var kw = navAddr(o) || ((o.district || '') + (o.name || ''));
+    url = 'https://uri.amap.com/search?keyword=' + encodeURIComponent(kw)
+        + '&city=' + encodeURIComponent('深圳') + '&callnative=1';
+  }
   window.open(url, '_blank');
   toast('已跳到高德地图，可驾车或公交导航');
 }
